@@ -10,7 +10,7 @@ const IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w200"; // Karakter resimleri 
  * @param {string} query - Aranacak dizi/film adı (Örn: "True Detective")
  * @returns {Promise<object|null>} - Bulunan ilk sonucun detayları
  */
-async function searchContent(query) {
+export async function searchContent(query) {
   const url = `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}`;
   try {
     const response = await fetch(url);
@@ -34,7 +34,7 @@ async function searchContent(query) {
  * @param {string} mediaType - 'tv' (dizi) veya 'movie' (film)
  * @returns {Promise<Array|null>} - Benzersiz karakterlerin tam listesi
  */
-async function getCast(contentId, mediaType = 'tv') {
+export async function getCast(contentId, mediaType = 'tv') {
   let url = '';
   // Gürültüyü filtrelemek için minimum bölüm sayısı (SADECE DİZİLER İÇİN)
   const MIN_EPISODE_COUNT = 2;

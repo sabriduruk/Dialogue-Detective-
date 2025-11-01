@@ -1,23 +1,46 @@
 {
   "manifest_version": 3,
-  "name": "X-Ray Vision Eklentisi",
-  "version": "0.1.1",
-  "description": "İzlenen içerikteki karakterleri gösterir.",
+  "name": "Diyalog Dedektifi (v1)",
+  "version": "1.0.0",
+  "description": "İzlenen içerikteki karakterleri, diyaloglara göre gösterir.",
   "permissions": [
     "storage"
   ],
   "host_permissions": [
-    "*://*.hbomax.com/*"
+    "*://*.hbomax.com/*",
+    "*://*.primevideo.com/*",
+    "*://*.amazon.com/*",
+    "*://*.amazon.co.uk/*",
+    "*://*.amazon.de/*"
   ],
   "content_scripts": [
     {
       "matches": [
-        "*://*.hbomax.com/*"
+        "*://*.hbomax.com/*",
+        "*://*.primevideo.com/*",
+        "*://*.amazon.com/gp/video/*",
+        "*://*.amazon.co.uk/gp/video/*",
+        "*://*.amazon.de/gp/video/*"
       ],
       "js": [
-        "api.js",
-        "content.js"
+        "loader.js"
       ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "common/api.js",
+        "main.js",
+        "adapters/amazon-adapter.js",
+        "adapters/hbomax-adapter.js"
+      ],
+      "matches": [
+        "*://*.hbomax.com/*",
+        "*://*.primevideo.com/*",
+        "*://*.amazon.com/*"
+      ],
+      "use_dynamic_url": true
     }
   ]
 }
