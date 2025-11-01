@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "X-Ray Vision Eklentisi",
+  "version": "0.1.1",
+  "description": "İzlenen içerikteki karakterleri gösterir.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "*://*.hbomax.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.hbomax.com/*"
+      ],
+      "js": [
+        "api.js",
+        "content.js"
+      ]
+    }
+  ]
+}
