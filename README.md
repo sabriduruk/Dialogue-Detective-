@@ -1,48 +1,27 @@
-# Actor Peek Eklentisi (Prototip)
-**Sürüm:** v0.9.0 - Beta (HBO Max Prototipi)
+# Dialogue Detective (Chrome Extension)
+**Version:** v1.0.0-beta (Multi-Platform Adapter Model)
 
-Bu proje, bir tarayıcı eklentisi (Chrome Extension) prototipidir. Amacı, Amazon Prime'ın "X-Ray" özelliğine benzer bir yapıyı, **diyalog odaklı** olarak diğer streaming platformlarına (şu an için **HBO Max**) getirmektir.
+This is a browser extension prototype that provides a dialogue-aware "X-Ray" feature for major streaming platforms.
 
-Kullanıcı, "X-RAY" butonuna bastığında, eklenti son 15 saniyede geçen altyazıları analiz eder ve bu diyaloglarda adı geçen karakterlerin bir listesini (fotoğraf, karakter adı, oyuncu adı) gösterir.
+* **Currently Supported:** HBO Max, Amazon Prime Video
+* **Core Function:** When the user clicks the "DIALOGUE" button, the extension scans the last 15 seconds of subtitles, identifies any characters mentioned, and displays their info (photo, character name, actor name).
 
-## 🚀 Temel Özellikler
+## 🏗️ Architecture ("Adapter Model")
 
-* **Platform Entegrasyonu:** Şu anda `hbomax.com` için özel olarak ayarlanmış seçicilerle (selectors) çalışır.
-* **Otomatik Veri Çekme:** İzlenen içeriğin başlığını (örn: "True Detective") otomatik olarak algılar.
-* **Kapsamlı Karakter Listesi:** TMDB API'sinin `aggregate_credits` özelliğini kullanarak, bir dizide *en az 2 bölümde* oynamış tüm (ana, yan, konuk) karakterlerin tam listesini çeker.
-* **Gürültü Filtreleme:** TMDB'den gelen "Man #3" gibi 1 bölümlük figüranları otomatik olarak filtreler.
-* **Dinamik Arayüz:** HBO Max oynatıcısına bir "X-RAY" butonu ve tıklandığında açılan bir karakter paneli enjekte eder.
-* **Gerçek Zamanlı Altyazı Takibi:** `MutationObserver` kullanarak altyazıların göründüğü `div`'i izler ve her yeni altyazıyı zaman damgasıyla birlikte kaydeder.
+The extension uses an Adapter Model to support multiple platforms cleanly.
 
-## 🧠 Eşleştirme Mantığı ("Arama Haritası")
+* **`main.js`:** The core "brain" of the extension. It's platform-independent and handles all logic, UI panel creation, and the Lookup Map.
+* **`loader.js`:** The "router." It checks the current URL (`hostname`) and injects the correct platform-specific adapter.
+* **`adapters/` (Folder):** Contains platform-specific files (`hbomax-adapter.js`, `amazon-adapter.js`). Each adapter's only job is to provide the correct, stable CSS selectors for:
+    1.  Title detection
+    2.  The subtitle container
+    3.  The control bar (for button injection)
+* **`common/api.js`:** Manages all API communication with TMDB.
 
-Bu prototipin kalbi, "Arama Haritası" (`characterLookupMap`) adı verilen özel bir eşleştirme mantığıdır.
+## 🧠 Core Logic ("Lookup Map")
 
-1.  **Ön İşleme (`buildCharacterMap`):** Eklenti, TMDB'den gelen (örn: 300+) karakter listesini *bir kereliğine* işler.
-    * `"Martin 'Marty' Hart"` gibi bir isimden `["martin", "marty", "hart"]` gibi anahtar kelimeler çıkarır.
-    * Bu kelimeleri bir `Map` objesine (`{"marty": [Martin Hart Objesi], "tuttle": [Billy Tuttle Objesi]...}`) yerleştirir.
+The heart of this extension is the "Lookup Map" (`characterLookupMap`) for high-speed, accurate matching.
 
-2.  **STOP_WORDS (Duraklama Listesi):** `"adam"`, `"lord"`, `"man"`, `"kral"` gibi hem özel isim hem de genel kelime olabilen sözcükler, haritaya eklenmeden önce filtrelenir. Bu, "Bu adam kim?" altyazısında "Adam Bryce" karakterinin çıkmasını engeller.
-
-3.  **Anlık Arama (`showXRayPanel`):** Kullanıcı "X-RAY" butonuna bastığında:
-    * Son 15 saniyenin altyazıları alınır (örn: `"...Tuttle'a ne oldu?"`).
-    * Altyazı metni temizlenir (`"tuttle a ne oldu"`).
-    * Bu temiz kelimeler (`tuttle`, `a`, `ne`, `oldu`) `STOP_WORDS` ile karşılaştırılır.
-    * Filtrelenen kelimeler (`"tuttle"`) doğrudan `characterLookupMap` haritasında (`map.get("tuttle")`) aranır ve eşleşen karakterler *anında* bulunur.
-
-Bu yöntem, `RegExp` veya "esnek arama"ya (`startsWith`) göre çok daha hızlı ve doğruluk oranı çok daha yüksektir.
-
-## 🔧 Nasıl Çalıştırılır
-
-1.  Projeyi klonla.
-2.  `api.js` dosyasını aç ve `const API_KEY = "..."` satırına kendi TMDB v3 API anahtarını gir.
-3.  Google Chrome'u aç, adres çubuğuna `chrome://extensions` yaz.
-4.  Sağ üstteki "Geliştirici Modu" (Developer Mode) seçeneğini aktifleştir.
-5.  Sol üstteki "Paketlenmemiş yükle" (Load unpacked) butonuna tıkla ve bu proje klasörünü seç.
-6.  `hbomax.com`'da bir dizi açıp altyazıları etkinleştir. Eklenti çalışmaya başlayacaktır.
-
-## 🔮 Sonraki Adımlar (Profesyonel Sürüm için)
-
-* **Adaptör Modeli (Adapter Pattern):** `content.js`'i platformdan bağımsız hale getirmek. Platforma özel seçicileri (`hbomax.js`, `netflix.js` gibi) ayrı dosyalara taşımak.
-* **API Anahtar Güvenliği:** API anahtarını koddan çıkarmak ve bir sunucu üzerinden (veya `chrome.storage.sync` ile) yönetmek.
-* **Önbellekleme (Caching):** API'dan çekilen kadro listelerini `chrome.storage.local` kullanarak 24 saat gibi bir süre önbelleğe almak.
+1.  **Preprocessing (`buildCharacterMap`):** On load, the extension processes the full cast list (e.g., 300+ characters) from the TMDB API. It extracts keywords from names (e.g., "Martin 'Marty' Hart" -> `["martin", "marty", "hart"]`).
+2.  **STOP_WORDS List:** Common words that are also names (like "lord", "man", "adam") are filtered out to prevent false matches (e.g., "who is that man?").
+3.  **Instant Search (`showXRayPanel`):** When the "DIALOGUE" button is clicked, recent subtitles (e.g., `"...what happened to Tuttle'a?"`) are cleaned (`"
