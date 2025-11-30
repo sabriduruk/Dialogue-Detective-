@@ -1,8 +1,7 @@
 // API functions for X-Ray Vision Extension
 
-// TMDB API Bilgileri
-const API_KEY = "c50a16c48d277bfd1f7166628c42147e";
-const BASE_URL = "https://api.themoviedb.org/3";
+// Cloudflare Worker Proxy URL (API anahtarı sunucu tarafında)
+const BASE_URL = "https://dialogue-detective-api.sabo-duruk.workers.dev";
 const IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w200"; // Karakter resimleri için
 
 /**
@@ -11,7 +10,7 @@ const IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w200"; // Karakter resimleri 
  * @returns {Promise<object|null>} - Bulunan ilk sonucun detayları
  */
 export async function searchContent(query) {
-  const url = `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}`;
+  const url = `${BASE_URL}/search/multi?query=${encodeURIComponent(query)}`;
   try {
     const response = await fetch(url);
     const data = await response.json();
@@ -41,10 +40,10 @@ export async function getCast(contentId, mediaType = 'tv') {
 
   if (mediaType === 'tv') {
     console.log(`Dizinin TÜM (aggregate) kadrosu (min ${MIN_EPISODE_COUNT} bölüm) çekiliyor...`);
-    url = `${BASE_URL}/tv/${contentId}/aggregate_credits?api_key=${API_KEY}&language=en-US`;
+    url = `${BASE_URL}/tv/${contentId}/aggregate_credits?language=en-US`;
   } else if (mediaType === 'movie') {
     console.log("Film kadrosu çekiliyor...");
-    url = `${BASE_URL}/movie/${contentId}/credits?api_key=${API_KEY}&language=en-US`;
+    url = `${BASE_URL}/movie/${contentId}/credits?language=en-US`;
   } else {
     console.error("Geçersiz medya tipi:", mediaType);
     return null;

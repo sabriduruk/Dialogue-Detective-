@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Diyalog Dedektifi (v1)",
+  "name": "Dialogue Detective",
   "version": "1.0.0",
-  "description": "İzlenen içerikteki karakterleri, diyaloglara göre gösterir.",
+  "description": "Detect characters in the content you are watching, based on dialogue.",
   "permissions": [
     "storage"
   ],

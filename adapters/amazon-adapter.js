@@ -55,15 +55,30 @@ const AmazonAdapter = {
     console.log("Amazon: Buton ekleniyor...");
     const xrayButton = document.createElement("button");
     xrayButton.innerText = buttonText;
-    xrayButton.style.padding = "10px 15px";
-    xrayButton.style.marginRight = "10px";
-    xrayButton.style.color = "white";
-    xrayButton.style.background = "none";
-    xrayButton.style.border = "1px solid white";
-    xrayButton.style.borderRadius = "4px";
+    
+    // Native Amazon buton tasarımı
+    xrayButton.style.background = "transparent";
+    xrayButton.style.border = "none";
+    xrayButton.style.color = "#f2f4f8";
+    xrayButton.style.fontSize = "14px";
+    xrayButton.style.fontWeight = "600";
+    xrayButton.style.padding = "0 20px";
+    xrayButton.style.marginRight = "0";
+    xrayButton.style.height = "100%";
+    xrayButton.style.display = "flex";
+    xrayButton.style.alignItems = "center";
     xrayButton.style.cursor = "pointer";
-    xrayButton.style.fontSize = "16px";
-    xrayButton.style.fontWeight = "bold";
+    xrayButton.style.transition = "background 0.2s ease";
+    
+    // Native Amazon hover efekti
+    xrayButton.addEventListener("mouseover", () => {
+      xrayButton.style.background = "rgba(255, 255, 255, 0.1)";
+    });
+    
+    xrayButton.addEventListener("mouseout", () => {
+      xrayButton.style.background = "transparent";
+    });
+    
     xrayButton.onclick = onClickCallback; // main.js'den gelen showXRayPanel fonksiyonu
     
     // Butonu sağ üstteki diğer butonların *soluna* (başına) ekle

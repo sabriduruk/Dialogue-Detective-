@@ -54,15 +54,33 @@ const HBOAdapter = {
     const xrayButton = document.createElement("button");
     xrayButton.id = "xray-button";
     xrayButton.innerText = buttonText;
-    // ... (Stiller - main.js'ye taşınabilir ama şimdilik burada kalsın)
-    xrayButton.style.fontSize = "14px";
-    xrayButton.style.padding = "0 10px";
-    xrayButton.style.margin = "0 10px";
-    xrayButton.style.color = "white";
-    xrayButton.style.background = "rgba(0, 0, 0, 0.5)";
-    xrayButton.style.border = "1px solid white";
+    
+    // Native HBO Max buton tasarımı
+    xrayButton.style.background = "transparent";
+    xrayButton.style.border = "none";
+    xrayButton.style.color = "#ecebea";
+    xrayButton.style.fontSize = "11px";
+    xrayButton.style.fontWeight = "700";
+    xrayButton.style.letterSpacing = "1.5px";
+    xrayButton.style.textTransform = "uppercase";
+    xrayButton.style.padding = "0 15px";
+    xrayButton.style.height = "100%";
+    xrayButton.style.display = "flex";
+    xrayButton.style.alignItems = "center";
+    xrayButton.style.justifyContent = "center";
     xrayButton.style.cursor = "pointer";
-    xrayButton.style.height = "32px"; 
+    xrayButton.style.transition = "color 0.2s ease";
+    
+    // Native HBO Max hover efekti
+    xrayButton.addEventListener("mouseover", () => {
+      xrayButton.style.color = "white";
+      xrayButton.style.textShadow = "0 0 10px rgba(255, 255, 255, 0.5)";
+    });
+    
+    xrayButton.addEventListener("mouseout", () => {
+      xrayButton.style.color = "#ecebea";
+      xrayButton.style.textShadow = "none";
+    });
     
     xrayButton.onclick = onClickCallback; // main.js'den gelen "beyin" fonksiyonunu tetikler
     
