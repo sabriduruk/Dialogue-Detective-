@@ -1,4 +1,4 @@
-# 🕵️‍♂️ Dialogue Detective
+#  Dialogue Detective
 
 **Dialogue Detective** is a browser extension that brings a "dialogue-aware" X-Ray experience to streaming platforms like **HBO Max** and **Amazon Prime Video**.
 
