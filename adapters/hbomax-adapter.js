@@ -40,6 +40,9 @@ const HBOAdapter = {
    * @param {string} buttonText - Butonda gösterilecek metin
    */
   injectXRayButton: (onClickCallback, buttonText) => {
+    // Eğer buton zaten varsa, tekrar ekleme ve çık
+    if (document.getElementById('xray-button')) return;
+    
     // Bu seçiciyi daha önce bulmuştuk (div[class*="ControlsFooterBottomRight"])
     const controlsSelector = 'div[class*="ControlsFooterBottomRight"]';
     const controlBar = document.querySelector(controlsSelector);

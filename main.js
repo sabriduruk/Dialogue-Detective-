@@ -67,12 +67,12 @@ function buildCharacterMap() {
 }
 
 /**
- * X-Ray butonuna tıklandığında tetiklenir. (TOGGLE MANTIĞI EKLENDİ)
+ * X-Ray butonuna tıklandığında tetiklenir. (AKILLI SKORLAMA VE ELEME)
  */
 function showXRayPanel() {
-  console.log("--- X-Ray Paneli Tetiklendi ---");
+  console.log("--- X-Ray Paneli Tetiklendi (Akıllı Skorlama) ---");
 
-  // 1. TOGGLE KONTROLÜ: Panel zaten açıksa kapat ve çık.
+  // 1. TOGGLE KONTROLÜ
   const existingPanel = document.getElementById("xray-panel-container");
   if (existingPanel) {
     existingPanel.remove();
@@ -97,6 +97,7 @@ function showXRayPanel() {
     return;
   }
 
+  // Altyazı kelimelerini topla
   const allWords = new Set();
   recentSubtitles.forEach(sub => {
     sub.text.split(' ').forEach(word => {
@@ -106,22 +107,54 @@ function showXRayPanel() {
     });
   });
 
-  console.log(`Son ${timeWindowInSeconds}s metnindeki filtrelenmiş kelimeler:`, allWords);
+  console.log(`Analiz edilen kelimeler:`, allWords);
 
-  const foundCharacters = new Map(); 
+  // --- AKILLI SKORLAMA ---
+  // Her karakterin puanını tutacak harita: { characterObj: score }
+  const candidateScores = new Map();
+
   allWords.forEach(word => {
     if (characterLookupMap.has(word)) {
       const matchedCastMembers = characterLookupMap.get(word);
+      
+      // Puan Belirleme:
+      // Kelime tek bir kişiye mi ait? (Unique = 10 Puan) Yoksa gruba mı? (Shared = 1 Puan)
+      // Örn: "jamie" -> 1 kişi (10 puan). "lannister" -> 5 kişi (1 puan).
+      const scoreToAdd = matchedCastMembers.length === 1 ? 10 : 1;
+
       matchedCastMembers.forEach(castMember => {
-        foundCharacters.set(castMember.character, castMember);
+        const currentScore = candidateScores.get(castMember) || 0;
+        candidateScores.set(castMember, currentScore + scoreToAdd);
       });
     }
   });
 
-  const characterList = Array.from(foundCharacters.values());
-  console.log(`Bulunan karakterler (${characterList.length} adet):`, characterList);
+  // --- ELEME MANTIĞI ---
+  let finalCharacters = [];
+  
+  if (candidateScores.size > 0) {
+    // En yüksek puanı bul
+    let maxScore = 0;
+    candidateScores.forEach((score) => {
+      if (score > maxScore) maxScore = score;
+    });
 
-  createXRayPanelHTML(characterList, timeWindowInSeconds);
+    console.log(`En yüksek skor: ${maxScore}`);
+
+    // Kural: Eğer güçlü bir eşleşme (>=10) varsa, zayıf eşleşmeleri (<10) ele.
+    // Yoksa (sadece soyadı geçtiyse), hepsini göster.
+    const threshold = maxScore >= 10 ? 10 : 1;
+
+    candidateScores.forEach((score, castMember) => {
+      if (score >= threshold) {
+        finalCharacters.push(castMember);
+      }
+    });
+  }
+
+  console.log(`Bulunan karakterler (${finalCharacters.length} adet):`, finalCharacters);
+
+  createXRayPanelHTML(finalCharacters, timeWindowInSeconds);
 }
 
 /**
@@ -290,21 +323,15 @@ function createXRayPanelHTML(characters, timeWindow) {
 export function cleanupUI() {
   console.log("--- Cleanup: UI ve state temizleniyor ---");
   
-  // Panel varsa kaldır
+  // Paneli kaldır
   const panel = document.getElementById("xray-panel-container");
-  if (panel) {
-    panel.remove();
-    console.log("Cleanup: Panel kaldırıldı.");
-  }
+  if (panel) panel.remove();
   
-  // Buton varsa kaldır
-  const button = document.getElementById("xray-button");
-  if (button) {
-    button.remove();
-    console.log("Cleanup: Buton kaldırıldı.");
-  }
+  // Butonu kaldır
+  const btn = document.getElementById("xray-button");
+  if (btn) btn.remove();
   
-  // State'i sıfırla
+  // Değişkenleri sıfırla
   subtitleHistory = [];
   isButtonInjected = false;
   currentCastList = [];
@@ -315,7 +342,6 @@ export function cleanupUI() {
   if (window.currentSubtitleObserver) {
     window.currentSubtitleObserver.disconnect();
     window.currentSubtitleObserver = null;
-    console.log("Cleanup: Observer durduruldu.");
   }
   
   console.log("--- Cleanup tamamlandı ---");

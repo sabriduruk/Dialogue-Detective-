@@ -42,6 +42,9 @@ const AmazonAdapter = {
    * @param {string} buttonText - Butonda gösterilecek metin
    */
   injectXRayButton: (onClickCallback, buttonText) => {
+    // Eğer buton zaten varsa, tekrar ekleme ve çık
+    if (document.getElementById('xray-button')) return;
+    
     // YENİ SEÇİCİ (Kullanıcının 22.37.15 görüntüsünden alındı - SAĞ ÜST)
     const controlsSelector = 'div[class*="atvwebplayersdk-hideabletopbuttons-container"]';
     const controlBar = document.querySelector(controlsSelector);
@@ -54,6 +57,7 @@ const AmazonAdapter = {
     
     console.log("Amazon: Buton ekleniyor...");
     const xrayButton = document.createElement("button");
+    xrayButton.id = "xray-button";
     xrayButton.innerText = buttonText;
     
     // Native Amazon buton tasarımı
