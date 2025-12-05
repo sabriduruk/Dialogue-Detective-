@@ -131,6 +131,9 @@ const AmazonAdapter = {
     };
     const observer = new MutationObserver(callback);
     observer.observe(subtitleContainer, config);
+    
+    // SPA cleanup için observer'ı global olarak sakla
+    window.currentSubtitleObserver = observer;
   }
 };
 

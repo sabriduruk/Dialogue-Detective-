@@ -125,7 +125,7 @@ function showXRayPanel() {
 }
 
 /**
- * Ekrana X-Ray panelini (HTML ve CSS) çizer. (GLASSMORPHISM UI)
+ * Ekrana X-Ray panelini (HTML ve CSS) çizer. (GLASSMORPHISM UI + DRAG & DROP + CLICK OUTSIDE)
  */
 function createXRayPanelHTML(characters, timeWindow) {
   // Eski paneli (varsa) kaldır (gerçi toggle bunu hallediyor ama güvenlik için kalsın)
@@ -157,9 +157,9 @@ function createXRayPanelHTML(characters, timeWindow) {
   panelContainer.style.zIndex = "9999999";
   panelContainer.style.overflowY = "auto";
   panelContainer.style.fontFamily = "'Helvetica Neue', Helvetica, Arial, sans-serif";
-  panelContainer.style.transition = "all 0.3s ease";
 
-  let innerHTML = `<div style="padding: 20px;"><h2 style="margin-top: 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 10px; font-size: 18px; font-weight: 600;">In Scene (Last ${timeWindow}s)<button id="xray-close-btn" style="float: right; background: rgba(255, 255, 255, 0.1); color: white; border: none; font-size: 20px; cursor: pointer; padding: 0 8px; border-radius: 6px; transition: background 0.2s;">&times;</button></h2><div id="xray-character-list">`;
+  // Başlık stillerine cursor: move ve user-select: none eklendi (sürüklenebilir)
+  let innerHTML = `<div style="padding: 20px;"><h2 id="xray-panel-header" style="margin-top: 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 10px; font-size: 18px; font-weight: 600; cursor: move; user-select: none;">In Scene (Last ${timeWindow}s)<button id="xray-close-btn" style="float: right; background: rgba(255, 255, 255, 0.1); color: white; border: none; font-size: 20px; cursor: pointer; padding: 0 8px; border-radius: 6px; transition: background 0.2s;">&times;</button></h2><div id="xray-character-list">`;
 
   if (characters.length === 0) {
     innerHTML += `<p style="color: #999;">No characters detected in recent dialogue.</p>`;
@@ -213,9 +213,112 @@ function createXRayPanelHTML(characters, timeWindow) {
   const injectionPoint = window.currentAdapter.getPanelInjectionPoint();
   injectionPoint.appendChild(panelContainer);
   
-  document.getElementById("xray-close-btn").onclick = () => {
+  // --- KAPAT BUTONU ---
+  const closeBtn = document.getElementById("xray-close-btn");
+  closeBtn.onclick = (e) => {
+    e.stopPropagation(); // Sürüklemeyi tetiklememesi için
     panelContainer.remove();
+    document.removeEventListener("click", handleClickOutside); // Cleanup
   };
+  
+  // --- SÜRÜKLE-BIRAK (DRAG & DROP) ---
+  const header = document.getElementById("xray-panel-header");
+  let isDragging = false;
+  let offsetX = 0;
+  let offsetY = 0;
+  
+  header.addEventListener("mousedown", (e) => {
+    // Kapat butonuna tıklandıysa sürükleme başlatma
+    if (e.target.id === "xray-close-btn") return;
+    
+    isDragging = true;
+    offsetX = e.clientX - panelContainer.offsetLeft;
+    offsetY = e.clientY - panelContainer.offsetTop;
+    panelContainer.style.transition = "none"; // Sürüklerken animasyonu kapat
+  });
+  
+  document.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    
+    const newLeft = e.clientX - offsetX;
+    const newTop = e.clientY - offsetY;
+    
+    panelContainer.style.left = `${newLeft}px`;
+    panelContainer.style.top = `${newTop}px`;
+  });
+  
+  document.addEventListener("mouseup", () => {
+    if (isDragging) {
+      isDragging = false;
+      panelContainer.style.transition = "box-shadow 0.2s ease"; // Animasyonu geri aç (sadece gölge için)
+    }
+  });
+  
+  // --- DIŞARI TIKLAYINCA KAPANMA (CLICK OUTSIDE) ---
+  function handleClickOutside(e) {
+    const panel = document.getElementById("xray-panel-container");
+    const xrayButton = document.getElementById("xray-button");
+    
+    // Panel yoksa listener'ı temizle
+    if (!panel) {
+      document.removeEventListener("click", handleClickOutside);
+      return;
+    }
+    
+    // Tıklanan yer panel veya içindeki bir element mi?
+    const isClickInsidePanel = panel.contains(e.target);
+    // Tıklanan yer açma butonu mu?
+    const isClickOnButton = xrayButton && xrayButton.contains(e.target);
+    
+    // Eğer dışarı tıklandıysa paneli kapat
+    if (!isClickInsidePanel && !isClickOnButton) {
+      panel.remove();
+      document.removeEventListener("click", handleClickOutside);
+    }
+  }
+  
+  // Click outside listener'ı biraz gecikmeyle ekle (açma tıklamasını yakalamasın)
+  setTimeout(() => {
+    document.addEventListener("click", handleClickOutside);
+  }, 100);
+}
+
+/**
+ * SPA navigasyonları için UI ve state temizliği yapar.
+ * URL değiştiğinde loader.js tarafından çağrılır.
+ */
+export function cleanupUI() {
+  console.log("--- Cleanup: UI ve state temizleniyor ---");
+  
+  // Panel varsa kaldır
+  const panel = document.getElementById("xray-panel-container");
+  if (panel) {
+    panel.remove();
+    console.log("Cleanup: Panel kaldırıldı.");
+  }
+  
+  // Buton varsa kaldır
+  const button = document.getElementById("xray-button");
+  if (button) {
+    button.remove();
+    console.log("Cleanup: Buton kaldırıldı.");
+  }
+  
+  // State'i sıfırla
+  subtitleHistory = [];
+  isButtonInjected = false;
+  currentCastList = [];
+  currentShowTitle = "";
+  characterLookupMap.clear();
+  
+  // MutationObserver'ı durdur (adaptörler tarafından window'a kaydedilir)
+  if (window.currentSubtitleObserver) {
+    window.currentSubtitleObserver.disconnect();
+    window.currentSubtitleObserver = null;
+    console.log("Cleanup: Observer durduruldu.");
+  }
+  
+  console.log("--- Cleanup tamamlandı ---");
 }
 
 // Ana Başlatıcı Fonksiyon
