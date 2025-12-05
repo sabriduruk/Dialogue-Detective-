@@ -1,27 +1,53 @@
-# Dialogue Detective (Chrome Extension)
-**Version:** v1.0.0-beta (Multi-Platform Adapter Model)
+# 🕵️‍♂️ Dialogue Detective
 
-This is a browser extension prototype that provides a dialogue-aware "X-Ray" feature for major streaming platforms.
+**Dialogue Detective** is a browser extension that brings a "dialogue-aware" X-Ray experience to streaming platforms like **HBO Max** and **Amazon Prime Video**.
 
-* **Currently Supported:** HBO Max, Amazon Prime Video
-* **Core Function:** When the user clicks the "DIALOGUE" button, the extension scans the last 15 seconds of subtitles, identifies any characters mentioned, and displays their info (photo, character name, actor name).
+Instead of just showing who is on screen, it answers the question: *"Wait, who are they talking about?"* by identifying character names mentioned in the subtitles.
 
-## 🏗️ Architecture ("Adapter Model")
 
-The extension uses an Adapter Model to support multiple platforms cleanly.
+##  Key Features
 
-* **`main.js`:** The core "brain" of the extension. It's platform-independent and handles all logic, UI panel creation, and the Lookup Map.
-* **`loader.js`:** The "router." It checks the current URL (`hostname`) and injects the correct platform-specific adapter.
-* **`adapters/` (Folder):** Contains platform-specific files (`hbomax-adapter.js`, `amazon-adapter.js`). Each adapter's only job is to provide the correct, stable CSS selectors for:
-    1.  Title detection
-    2.  The subtitle container
-    3.  The control bar (for button injection)
-* **`common/api.js`:** Manages all API communication with TMDB.
+* **Smart Detection:** Analyzes the last 15 seconds of subtitles to find character names instantly.
+* **Multi-Platform:** Seamlessly integrates with **HBO Max** and **Amazon Prime Video**.
+* **Instant Results:** Powered by a custom **Lookup Map** algorithm for zero-latency character matching.
+* **Context Aware:** Intelligently filters out common words (e.g., "Man", "Lord") to prevent false positives.
+* **Secure Architecture:** Uses **Cloudflare Workers** to proxy API requests, ensuring security and high performance via Edge Caching.
+* **Affiliate Integration:** Helps users find movies and merchandise related to the characters they love.
 
-## 🧠 Core Logic ("Lookup Map")
+##  Tech Stack & Architecture
 
-The heart of this extension is the "Lookup Map" (`characterLookupMap`) for high-speed, accurate matching.
+This project is built with a focus on performance, security, and scalability using the **Adapter Design Pattern**.
 
-1.  **Preprocessing (`buildCharacterMap`):** On load, the extension processes the full cast list (e.g., 300+ characters) from the TMDB API. It extracts keywords from names (e.g., "Martin 'Marty' Hart" -> `["martin", "marty", "hart"]`).
-2.  **STOP_WORDS List:** Common words that are also names (like "lord", "man", "adam") are filtered out to prevent false matches (e.g., "who is that man?").
-3.  **Instant Search (`showXRayPanel`):** When the "DIALOGUE" button is clicked, recent subtitles (e.g., `"...what happened to Tuttle'a?"`) are cleaned (`"
+* **Frontend:** Vanilla JavaScript (ES6+), HTML5, CSS3 (Glassmorphism UI).
+* **Core Logic:** Platform-agnostic "Brain" (`main.js`) handles the logic, while specific adapters manage DOM interactions for each streaming service.
+* **Backend:** **Cloudflare Workers** (Serverless).
+    * Handles TMDB API communication.
+    * Implements **KV Caching** to minimize API usage.
+    * Manages user feedback webhooks.
+
+##  Installation (For Developers)
+
+1.  **Clone the Repository**
+    ```bash
+    git clone [https://github.com/yourusername/dialogue-detective.git](https://github.com/yourusername/dialogue-detective.git)
+    ```
+
+2.  **Load into Chrome**
+    * Open `chrome://extensions`.
+    * Enable **Developer mode**.
+    * Click **Load unpacked** and select the project folder.
+
+3.  **Backend Configuration (Optional)**
+    * The extension requires a backend proxy to function correctly.
+    * You will need to deploy the `worker.js` to your own Cloudflare account and configure the necessary Environment Variables (`TMDB_API_KEY`, `GOOGLE_SCRIPT_URL`).
+    * Update `common/api.js` with your worker's URL.
+
+##  Legal & Disclaimer
+
+* **Attribution:** This product uses the TMDB API but is not endorsed or certified by TMDB.
+* **Privacy:** This extension operates locally on your browser. It does not store or transmit personal browsing data.
+* **Affiliate Disclosure:** This extension may contain affiliate links to Amazon.com.
+* **Trademarks:** Netflix, HBO Max, and Amazon Prime Video are trademarks of their respective owners. This is an independent project.
+
+
+
