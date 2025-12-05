@@ -89,3 +89,39 @@ export async function getCast(contentId, mediaType = 'tv') {
     return null;
   }
 }
+
+/**
+ * Kullanıcı geri bildirimini Cloudflare Worker'a gönderir.
+ * @param {string} message - Kullanıcının geri bildirim mesajı
+ * @param {string} platform - Kullanıcının bulunduğu platform (HBO Max, Amazon vb.)
+ * @returns {Promise<boolean>} - Başarılıysa true, hata varsa false
+ */
+export async function sendFeedback(message, platform) {
+  const url = `${BASE_URL}/feedback`;
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: message,
+        platform: platform,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent
+      })
+    });
+    
+    if (response.ok) {
+      console.log("Feedback başarıyla gönderildi!");
+      return true;
+    } else {
+      console.error("Feedback gönderilemedi:", response.status);
+      return false;
+    }
+  } catch (error) {
+    console.error("Feedback gönderme hatası:", error);
+    return false;
+  }
+}

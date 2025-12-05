@@ -158,7 +158,7 @@ function showXRayPanel() {
 }
 
 /**
- * Ekrana X-Ray panelini (HTML ve CSS) çizer. (GLASSMORPHISM UI + DRAG & DROP + CLICK OUTSIDE)
+ * Ekrana X-Ray panelini (HTML ve CSS) çizer. (GLASSMORPHISM UI + DRAG & DROP + CLICK OUTSIDE + FEEDBACK)
  */
 function createXRayPanelHTML(characters, timeWindow) {
   // Eski paneli (varsa) kaldır (gerçi toggle bunu hallediyor ama güvenlik için kalsın)
@@ -192,7 +192,14 @@ function createXRayPanelHTML(characters, timeWindow) {
   panelContainer.style.fontFamily = "'Helvetica Neue', Helvetica, Arial, sans-serif";
 
   // Başlık stillerine cursor: move ve user-select: none eklendi (sürüklenebilir)
-  let innerHTML = `<div style="padding: 20px;"><h2 id="xray-panel-header" style="margin-top: 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 10px; font-size: 18px; font-weight: 600; cursor: move; user-select: none;">In Scene (Last ${timeWindow}s)<button id="xray-close-btn" style="float: right; background: rgba(255, 255, 255, 0.1); color: white; border: none; font-size: 20px; cursor: pointer; padding: 0 8px; border-radius: 6px; transition: background 0.2s;">&times;</button></h2><div id="xray-character-list">`;
+  // Feedback butonu (✉️) ve Kapat butonu (&times;) başlıkta
+  let innerHTML = `<div style="padding: 20px;">
+    <h2 id="xray-panel-header" style="margin-top: 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 10px; font-size: 18px; font-weight: 600; cursor: move; user-select: none;">
+      In Scene (Last ${timeWindow}s)
+      <button id="xray-close-btn" style="float: right; background: rgba(255, 255, 255, 0.1); color: white; border: none; font-size: 20px; cursor: pointer; padding: 0 8px; border-radius: 6px; transition: background 0.2s;" title="Close">&times;</button>
+      <button id="xray-feedback-btn" style="float: right; background: transparent; color: rgba(255, 255, 255, 0.7); border: none; font-size: 16px; cursor: pointer; padding: 0 8px; border-radius: 6px; transition: all 0.2s; margin-right: 4px;" title="Send Feedback">✉️</button>
+    </h2>
+    <div id="xray-character-list">`;
 
   if (characters.length === 0) {
     innerHTML += `<p style="color: #999;">No characters detected in recent dialogue.</p>`;
@@ -239,7 +246,20 @@ function createXRayPanelHTML(characters, timeWindow) {
           This product uses the TMDB API but is not endorsed or certified by TMDB.
         </p>
       </div>`;
-  innerHTML += `</div></div>`;
+  innerHTML += `</div>`;
+  
+  // --- FEEDBACK FORMU (GİZLİ) ---
+  innerHTML += `
+    <div id="xray-feedback-view" style="display: none;">
+      <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 16px; font-weight: 600; color: white;">✉️ Send Feedback</h3>
+      <textarea id="xray-feedback-text" placeholder="Report a bug or suggest a feature..." style="width: 100%; height: 120px; padding: 12px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; background: rgba(0, 0, 0, 0.3); color: white; font-size: 14px; font-family: inherit; resize: none; box-sizing: border-box; outline: none; transition: border-color 0.2s;"></textarea>
+      <div style="display: flex; gap: 10px; margin-top: 12px;">
+        <button id="xray-feedback-cancel" style="flex: 1; padding: 10px; background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s;">Cancel</button>
+        <button id="xray-feedback-send" style="flex: 1; padding: 10px; background: linear-gradient(135deg, #007AFF, #5856D6); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;">Send</button>
+      </div>
+    </div>`;
+  
+  innerHTML += `</div>`;
   panelContainer.innerHTML = innerHTML;
 
   // Paneli eklemek için platforma özel konteyneri kullan
@@ -254,6 +274,102 @@ function createXRayPanelHTML(characters, timeWindow) {
     document.removeEventListener("click", handleClickOutside); // Cleanup
   };
   
+  // --- FEEDBACK BUTONU VE FORM ETKİLEŞİMİ ---
+  const feedbackBtn = document.getElementById("xray-feedback-btn");
+  const characterList = document.getElementById("xray-character-list");
+  const feedbackView = document.getElementById("xray-feedback-view");
+  const feedbackCancel = document.getElementById("xray-feedback-cancel");
+  const feedbackSend = document.getElementById("xray-feedback-send");
+  const feedbackText = document.getElementById("xray-feedback-text");
+  
+  // Feedback butonu hover efekti
+  feedbackBtn.addEventListener("mouseover", () => {
+    feedbackBtn.style.color = "white";
+    feedbackBtn.style.textShadow = "0 0 8px rgba(255, 255, 255, 0.5)";
+  });
+  feedbackBtn.addEventListener("mouseout", () => {
+    feedbackBtn.style.color = "rgba(255, 255, 255, 0.7)";
+    feedbackBtn.style.textShadow = "none";
+  });
+  
+  // Feedback butonuna tıklandığında form göster
+  feedbackBtn.onclick = (e) => {
+    e.stopPropagation();
+    characterList.style.display = "none";
+    feedbackView.style.display = "block";
+  };
+  
+  // İptal butonuna tıklandığında formu gizle
+  feedbackCancel.onclick = (e) => {
+    e.stopPropagation();
+    feedbackView.style.display = "none";
+    characterList.style.display = "block";
+    feedbackText.value = ""; // Formu temizle
+  };
+  
+  // Gönder butonuna tıklandığında feedback gönder
+  feedbackSend.onclick = async (e) => {
+    e.stopPropagation();
+    
+    const message = feedbackText.value.trim();
+    if (!message) {
+      feedbackText.style.borderColor = "rgba(255, 100, 100, 0.5)";
+      setTimeout(() => {
+        feedbackText.style.borderColor = "rgba(255, 255, 255, 0.2)";
+      }, 1500);
+      return;
+    }
+    
+    // Butonu devre dışı bırak ve "Sending..." yaz
+    feedbackSend.disabled = true;
+    feedbackSend.textContent = "Sending...";
+    feedbackSend.style.opacity = "0.7";
+    
+    try {
+      // api.js'ten sendFeedback fonksiyonunu dinamik import et
+      const { sendFeedback } = await import(chrome.runtime.getURL('common/api.js'));
+      const platform = window.currentAdapter ? window.currentAdapter.platformName : "Unknown";
+      const success = await sendFeedback(message, platform);
+      
+      if (success) {
+        feedbackSend.textContent = "Sent! ✅";
+        feedbackSend.style.background = "linear-gradient(135deg, #34C759, #30D158)";
+        
+        setTimeout(() => {
+          feedbackView.style.display = "none";
+          characterList.style.display = "block";
+          feedbackText.value = "";
+          // Butonu sıfırla
+          feedbackSend.disabled = false;
+          feedbackSend.textContent = "Send";
+          feedbackSend.style.opacity = "1";
+          feedbackSend.style.background = "linear-gradient(135deg, #007AFF, #5856D6)";
+        }, 1500);
+      } else {
+        throw new Error("Feedback gönderilemedi");
+      }
+    } catch (error) {
+      console.error("Feedback hatası:", error);
+      feedbackSend.textContent = "Error ❌";
+      feedbackSend.style.background = "linear-gradient(135deg, #FF3B30, #FF453A)";
+      
+      setTimeout(() => {
+        feedbackSend.disabled = false;
+        feedbackSend.textContent = "Send";
+        feedbackSend.style.opacity = "1";
+        feedbackSend.style.background = "linear-gradient(135deg, #007AFF, #5856D6)";
+      }, 2000);
+    }
+  };
+  
+  // Textarea focus stili
+  feedbackText.addEventListener("focus", () => {
+    feedbackText.style.borderColor = "rgba(0, 122, 255, 0.5)";
+  });
+  feedbackText.addEventListener("blur", () => {
+    feedbackText.style.borderColor = "rgba(255, 255, 255, 0.2)";
+  });
+  
   // --- SÜRÜKLE-BIRAK (DRAG & DROP) ---
   const header = document.getElementById("xray-panel-header");
   let isDragging = false;
@@ -261,8 +377,8 @@ function createXRayPanelHTML(characters, timeWindow) {
   let offsetY = 0;
   
   header.addEventListener("mousedown", (e) => {
-    // Kapat butonuna tıklandıysa sürükleme başlatma
-    if (e.target.id === "xray-close-btn") return;
+    // Kapat veya feedback butonuna tıklandıysa sürükleme başlatma
+    if (e.target.id === "xray-close-btn" || e.target.id === "xray-feedback-btn") return;
     
     isDragging = true;
     offsetX = e.clientX - panelContainer.offsetLeft;
